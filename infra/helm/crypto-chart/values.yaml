@@ -1,0 +1,12 @@
+replicaCount: 1
+image:
+  backend: ghcr.io/BelaouraHamza/backend:latest
+  frontend: ghcr.io/BelaouraHamza/frontend:latest
+postgres:
+  image: postgres:15-alpine
+  database: crypto_db
+  user: crypto_user
+  password: crypto_pass
+ingress:
+  host: crypto.local
+  tlsSecret: crypto-tls

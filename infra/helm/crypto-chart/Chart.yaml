@@ -1,0 +1,5 @@
+apiVersion: v2
+name: crypto-chart
+description: Crypto Dashboard Helm chart (backend, frontend, postgres)
+version: 0.1.0
+appVersion: "1.0"

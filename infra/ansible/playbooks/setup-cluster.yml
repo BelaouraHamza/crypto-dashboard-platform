@@ -1,0 +1,17 @@
+- name: Setup local cluster (Minikube) and ArgoCD
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Start minikube (docker driver)
+      command: minikube start --driver=docker
+      ignore_errors: false
+
+    - name: Enable ingress addon
+      command: minikube addons enable ingress
+
+    - name: Create argocd namespace
+      command: kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Install ArgoCD
+      command: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

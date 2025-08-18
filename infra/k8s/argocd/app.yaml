@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crypto-dashboard
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/BelaouraHamza/crypto-dashboard-platform.git'
+    targetRevision: main
+    path: ops/k8s/base
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: crypto
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
