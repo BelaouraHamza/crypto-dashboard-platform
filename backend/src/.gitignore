@@ -1,0 +1,35 @@
+# Ignore fichiers/dossiers système
+*.DS_Store
+*.vscode/
+*.vs/
+.vs/
+
+# Ignore binaires et dossiers de build
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+
+# Fichiers utilisateur & config
+*.user
+*.suo
+*.db
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.temp
+~$*
+
+# dotnet build artefacts
+project.lock.json
+project.fragment.lock.json
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# node_modules (si projet avec Node.js)
+node_modules/
