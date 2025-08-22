@@ -2,86 +2,145 @@ name: CI-CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]   # 1️⃣ Déclenche la pipeline à chaque push sur main
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]   # 2️⃣ Déclenche aussi sur PR vers main
+    branches: [ "main" ]
 
 jobs:
-  build-and-deploy:
+  # ================================
+  # CI : Backend
+  # ================================
+  ci-backend:
     runs-on: ubuntu-latest
     steps:
-      # === ÉTAPE 1 : Récupération du code source ===
       - name: Checkout repository
-        uses: actions/checkout@v3   # 3️⃣ On clone le repo dans la VM runner
+        uses: actions/checkout@v3
 
-      # === ÉTAPE 2 : Setup Docker ===
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2   # 4️⃣ Docker Buildx pour multi-arch
+        uses: docker/setup-buildx-action@v2
 
-      # === ÉTAPE 3 : Connexion au registry (DockerHub ou GHCR) ===
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}   # 5️⃣ Utilisation des secrets GitHub
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # === ÉTAPE 4 : Build & Push Backend ===
-      - name: Build and push backend
+      - name: Cache Docker backend layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-backend
+          key: backend-${{ github.sha }}
+          restore-keys: backend-
+
+      - name: Build & Push Backend
         uses: docker/build-push-action@v4
         with:
-          context: ./src/backend/CryptoDashboardApp   # 6️⃣ Construit l’image backend .NET
+          context: ./src/backend/CryptoDashboardApp
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/crypto-backend:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/crypto-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/crypto-backend:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache-backend
+          cache-to: type=local,dest=/tmp/.buildx-cache-backend
 
-      # === ÉTAPE 5 : Build & Push Frontend ===
-      - name: Build and push frontend
+  # ================================
+  # CI : Frontend
+  # ================================
+  ci-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: frontend-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: frontend-node-
+
+      - name: Cache Docker frontend layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-frontend
+          key: frontend-${{ github.sha }}
+          restore-keys: frontend-
+
+      - name: Build & Push Frontend
         uses: docker/build-push-action@v4
         with:
-          context: ./src/frontend   # 7️⃣ Construit l’image frontend Angular
+          context: ./src/frontend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/crypto-frontend:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/crypto-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/crypto-frontend:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache-frontend
+          cache-to: type=local,dest=/tmp/.buildx-cache-frontend
 
-      # === ÉTAPE 6 : Setup Ansible ===
+  # ================================
+  # CD : Deploy to Kubernetes / ArgoCD
+  # ================================
+  cd:
+    runs-on: ubuntu-latest
+    needs: [ci-backend, ci-frontend]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Install Ansible
-        run: |
-          sudo apt update && sudo apt install -y ansible  # 8️⃣ Installe Ansible sur le runner
+        run: sudo apt update && sudo apt install -y ansible
 
-      # === ÉTAPE 7 : Provisionnement du cluster avec Ansible ===
-      - name: Run Ansible playbooks
-        run: |
-          ansible-playbook infra/ansible/playbooks/setup-cluster.yml       # 9️⃣ Création cluster (kind ou minikube)
-          ansible-playbook infra/ansible/playbooks/tls-bootstrap.yml       # 🔟 Certificat + TLS
-          ansible-playbook infra/ansible/playbooks/deploy-apps.yml         # 1️⃣1️⃣ Déploiement initial des manifests
+      - name: Run Ansible bootstrap playbook
+        run: ansible-playbook infra/ansible/playbooks/Bootstrap.yml
 
-      # === ÉTAPE 8 : Setup Kubectl ===
       - name: Set up Kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config      # 1️⃣2️⃣ Injecte le kubeconfig depuis GitHub Secrets
+          echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
 
-      # === ÉTAPE 9 : Helm Deployment ===
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
       - name: Deploy with Helm
         run: |
           helm upgrade --install crypto-dashboard infra/helm/crypto-chart \
             --namespace crypto \
             --create-namespace \
-            -f infra/helm/crypto-chart/values.yaml                        # 1️⃣3️⃣ Déploiement via Helm (chart custom)
+            -f infra/helm/crypto-chart/values.yaml
 
-      # === ÉTAPE 10 : Déploiement Gitinfra avec ArgoCD ===
       - name: Install ArgoCD CLI
         run: |
           curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          sudo install -m 555 argocd /usr/local/bin/argocd              # 1️⃣4️⃣ Télécharge et installe argocd CLI
+          sudo install -m 555 argocd /usr/local/bin/argocd
+
+      - name: Retrieve ArgoCD admin password if missing
+        id: argocd-pass
+        run: |
+          if [ -z "${{ secrets.ARGOCD_PASSWORD }}" ]; then
+            PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+                      -o jsonpath="{.data.password}" | base64 -d)
+            echo "ARGOCD_PASSWORD=$PASSWORD" >> $GITHUB_ENV
 
       - name: Login to ArgoCD
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
             --username admin \
             --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --insecure                                               # 1️⃣5️⃣ Connexion à l’instance ArgoCD
+            --insecure
 
       - name: Apply ArgoCD App
         run: |
-          kubectl apply -f infra/argocd/app.yaml                        # 1️⃣6️⃣ Déclare l’application dans ArgoCD
-          argocd app sync crypto-dashboard                            # 1️⃣7️⃣ Sync pour appliquer les manifests depuis Git
-
+          kubectl apply -f infra/argocd/app.yaml
+          if ! argocd app sync crypto-dashboard; then
+            echo "⚠️ Sync failed, rollback..."
+            argocd app rollback crypto-dashboard
+            exit 1
