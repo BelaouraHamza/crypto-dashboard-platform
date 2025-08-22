@@ -2,6 +2,8 @@
   hosts: localhost
   connection: local
   gather_facts: no
+  vars:
+    use_ci: "{{ lookup('env','GITHUB_ACTIONS') | default(false) }}"
   roles:
     - tls
     - cluster

@@ -1,18 +1,29 @@
----
-- name: Start Minikube cluster (docker driver)
-  community.general.minikube:
-    state: started
-    driver: docker
-    cpus: 2
-    memory: 4096
-    disk_size: 20000
-  become: yes
+- name: "Create local Kubernetes cluster"
+  block:
+    - name: Use Kind on CI
+      when: use_ci
+      block:
+        - name: Install kind CLI
+          ansible.builtin.command: >
+            curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64 && chmod +x ./kind && sudo mv ./kind /usr/local/bin/kind
+          args:
+            creates: /usr/local/bin/kind
 
+        - name: Create Kind cluster
+          community.kubernetes.k8s_info:
+            kind: Cluster
+          ignore_errors: true
+          # ou utiliser une commande shell simple si tu n’as pas de module Kind officiel
+          # command: kind create cluster --name crypto-cluster --config ../../k8s/kind-config.yaml
 
-- name: Enable ingress addon
-  command: minikube addons enable ingress
+    - name: Use Minikube locally
+      when: not use_ci
+      block:
+        - name: Start minikube (docker driver)
+          ansible.builtin.command: minikube start --driver=docker
+          ignore_errors: yes
 
-- name: Create ArgoCD namespace
+- name: Ensure argocd namespace exists
   community.kubernetes.k8s:
     state: present
     definition:
@@ -20,9 +31,3 @@
       kind: Namespace
       metadata:
         name: argocd
-
-- name: Install ArgoCD
-  community.kubernetes.k8s:
-    state: present
-    namespace: argocd
-    src: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

@@ -1,25 +1,22 @@
----
-# roles/tls/tasks/main.yml
 - name: Ensure /etc/hosts contains crypto.local
   become: yes
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "127.0.0.1 crypto.local"
     state: present
 
 - name: Generate private key
-  community.crypto.openssl_privatekey:
+  community.crypto.x509_privatekey:
     path: /tmp/crypto.local.key
     size: 2048
-    type: RSA
-  register: privatekey_result
+    state: present
 
 - name: Generate CSR
-  community.crypto.openssl_csr:
+  community.crypto.x509_csr:
     path: /tmp/crypto.local.csr
     privatekey_path: /tmp/crypto.local.key
     common_name: crypto.local
-  register: csr_result
+    state: present
 
 - name: Self-sign certificate
   community.crypto.x509_certificate:
@@ -28,21 +25,18 @@
     csr_path: /tmp/crypto.local.csr
     provider: selfsigned
     days: 365
-    subject:
-      common_name: crypto.local
-  register: cert_result
+    state: present
 
 - name: Create TLS secret in crypto namespace
-  kubernetes.core.k8s:
+  community.kubernetes.k8s:
     state: present
+    namespace: crypto
     definition:
       apiVersion: v1
       kind: Secret
       metadata:
         name: crypto-tls
-        namespace: crypto
       type: kubernetes.io/tls
       data:
-        tls.crt: "{{ lookup('file', '/tmp/crypto.local.crt') | b64encode }}"
-        tls.key: "{{ lookup('file', '/tmp/crypto.local.key') | b64encode }}"
-  ignore_errors: yes
+        tls.crt: "{{ lookup('file','/tmp/crypto.local.crt') | b64encode }}"
+        tls.key: "{{ lookup('file','/tmp/crypto.local.key') | b64encode }}"

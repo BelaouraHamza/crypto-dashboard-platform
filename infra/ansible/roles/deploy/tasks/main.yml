@@ -1,9 +1,17 @@
-- name: Create application namespace
+- name: Create crypto namespace
   community.kubernetes.k8s:
     state: present
-    src: "{{ playbook_dir }}/../k8s/base/namespace.yaml"
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: crypto
 
-- name: Deploy base manifests
-  community.kubernetes.k8s:
+- name: Deploy Helm chart
+  community.kubernetes.helm:
+    name: crypto-dashboard
+    chart_ref: ../../helm/crypto-chart
+    release_namespace: crypto
+    create_namespace: true
+    values_file: ../../helm/crypto-chart/values.yaml
     state: present
-    src: "{{ playbook_dir }}/../k8s/base/"
