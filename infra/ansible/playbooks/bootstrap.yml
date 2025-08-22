@@ -1,0 +1,8 @@
+- name: Bootstrap local Kubernetes cluster with TLS and ArgoCD
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - tls
+    - setup-cluster
+    - deploy-apps

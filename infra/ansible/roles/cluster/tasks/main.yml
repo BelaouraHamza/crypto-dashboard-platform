@@ -1,0 +1,22 @@
+- name: Start Minikube cluster (docker driver)
+  community.general.minikube:
+    state: started
+    driver: docker
+
+- name: Enable ingress addon
+  command: minikube addons enable ingress
+
+- name: Create ArgoCD namespace
+  community.kubernetes.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: argocd
+
+- name: Install ArgoCD
+  community.kubernetes.k8s:
+    state: present
+    namespace: argocd
+    src: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

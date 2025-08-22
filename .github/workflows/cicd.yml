@@ -49,9 +49,9 @@ jobs:
       # === ÉTAPE 7 : Provisionnement du cluster avec Ansible ===
       - name: Run Ansible playbooks
         run: |
-          ansible-playbook ops/ansible/playbooks/setup-cluster.yml       # 9️⃣ Création cluster (kind ou minikube)
-          ansible-playbook ops/ansible/playbooks/tls-bootstrap.yml       # 🔟 Certificat + TLS
-          ansible-playbook ops/ansible/playbooks/deploy-apps.yml         # 1️⃣1️⃣ Déploiement initial des manifests
+          ansible-playbook infra/ansible/playbooks/setup-cluster.yml       # 9️⃣ Création cluster (kind ou minikube)
+          ansible-playbook infra/ansible/playbooks/tls-bootstrap.yml       # 🔟 Certificat + TLS
+          ansible-playbook infra/ansible/playbooks/deploy-apps.yml         # 1️⃣1️⃣ Déploiement initial des manifests
 
       # === ÉTAPE 8 : Setup Kubectl ===
       - name: Set up Kubeconfig
@@ -62,12 +62,12 @@ jobs:
       # === ÉTAPE 9 : Helm Deployment ===
       - name: Deploy with Helm
         run: |
-          helm upgrade --install crypto-dashboard ops/helm/crypto-chart \
+          helm upgrade --install crypto-dashboard infra/helm/crypto-chart \
             --namespace crypto \
             --create-namespace \
-            -f ops/helm/crypto-chart/values.yaml                        # 1️⃣3️⃣ Déploiement via Helm (chart custom)
+            -f infra/helm/crypto-chart/values.yaml                        # 1️⃣3️⃣ Déploiement via Helm (chart custom)
 
-      # === ÉTAPE 10 : Déploiement GitOps avec ArgoCD ===
+      # === ÉTAPE 10 : Déploiement Gitinfra avec ArgoCD ===
       - name: Install ArgoCD CLI
         run: |
           curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
@@ -82,6 +82,6 @@ jobs:
 
       - name: Apply ArgoCD App
         run: |
-          kubectl apply -f ops/argocd/app.yaml                        # 1️⃣6️⃣ Déclare l’application dans ArgoCD
+          kubectl apply -f infra/argocd/app.yaml                        # 1️⃣6️⃣ Déclare l’application dans ArgoCD
           argocd app sync crypto-dashboard                            # 1️⃣7️⃣ Sync pour appliquer les manifests depuis Git
 

@@ -1,0 +1,9 @@
+- name: Create application namespace
+  community.kubernetes.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../k8s/base/namespace.yaml"
+
+- name: Deploy base manifests
+  community.kubernetes.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../k8s/base/"

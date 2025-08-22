@@ -1,7 +1,7 @@
 replicaCount: 1
 image:
-  backend: ghcr.io/BelaouraHamza/backendDashboard:latest
-  frontend: ghcr.io/BelaouraHamza/frontendDashboard:latest
+  backend: ghcr.io/hamzablr/crypto-backend:latest
+  frontend: ghcr.io/hamzablr/crypto-frontend:latest
 postgres:
   image: postgres:15-alpine
   database: crypto_db

@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 'https://github.com/BelaouraHamza/crypto-dashboard-platform.git'
     targetRevision: main
-    path: ops/k8s/base
+    path: infra/k8s/base
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: crypto
