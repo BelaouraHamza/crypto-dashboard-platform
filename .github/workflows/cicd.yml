@@ -100,7 +100,10 @@ jobs:
         run: sudo apt update && sudo apt install -y ansible
 
       - name: Run bootstrap playbook
-        run: ansible-playbook infra/ansible/playbooks/bootstrap.yml -i infra/ansible/inventory
+        run: |
+          cd infra/ansible
+          ansible-playbook playbooks/bootstrap.yml \
+          -i inventory
 
       - name: Set up Kubeconfig
         run: |
