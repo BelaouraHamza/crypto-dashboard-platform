@@ -27,6 +27,15 @@
     days: 365
     state: present
 
+- name: Ensure crypto namespace exists
+  community.kubernetes.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: crypto
+
 - name: Create TLS secret in crypto namespace
   community.kubernetes.k8s:
     state: present
@@ -40,3 +49,12 @@
       data:
         tls.crt: "{{ lookup('file','/tmp/crypto.local.crt') | b64encode }}"
         tls.key: "{{ lookup('file','/tmp/crypto.local.key') | b64encode }}"
+
+- name: Clean temporary files
+  ansible.builtin.file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - crypto.local.key
+    - crypto.local.csr
+    - crypto.local.crt

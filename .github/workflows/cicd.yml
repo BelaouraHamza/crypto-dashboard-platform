@@ -108,8 +108,7 @@ jobs:
       - name: Run bootstrap playbook
         run: |
           cd infra/ansible
-          ansible-playbook playbooks/bootstrap.yml \
-          -i inventory
+          ansible-playbook playbooks/bootstrap.yml -i inventory
 
       - name: Set up Kubeconfig
         run: |
@@ -145,7 +144,6 @@ jobs:
           --username admin \
           --password $ARGOCD_PASSWORD \
           --insecure || true
-
 
       - name: Apply ArgoCD App
         run: |
