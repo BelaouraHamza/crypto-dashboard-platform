@@ -105,6 +105,12 @@ jobs:
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
+      # Installer les collections nécessaires
+      - name: Install required Ansible collections
+        run: |
+          ansible-galaxy collection install community.crypto:>=2.0.0
+          ansible-galaxy collection install community.kubernetes:>=2.0.0
+          
       - name: Run bootstrap playbook
         run: |
           cd infra/ansible
