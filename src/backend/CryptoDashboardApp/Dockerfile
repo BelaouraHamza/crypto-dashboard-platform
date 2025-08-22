@@ -11,20 +11,18 @@ COPY CryptoDashboard.API/CryptoDashboard.API.csproj CryptoDashboard.API/
 
 RUN dotnet restore CryptoDashboard.API/CryptoDashboard.API.csproj
 
-# Copie du reste et publish
 COPY . .
 RUN dotnet publish CryptoDashboard.API/CryptoDashboard.API.csproj -c Release -o /app/publish /p:UseAppHost=false
 
-# ---- Runtime stage ----
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
-# Expose en 8080
-ENV ASPNETCORE_URLS=http://0.0.0.0:8080
-EXPOSE 8080
+
+ENV ASPNETCORE_URLS=http://+:80
 
 # Création d'un user non-root (pour des raisons de sécurité)
 RUN adduser --disabled-password --gecos "" appuser
 USER appuser
 
 COPY --from=build /app/publish .
+EXPOSE 80
 ENTRYPOINT ["dotnet", "CryptoDashboard.API.dll"]

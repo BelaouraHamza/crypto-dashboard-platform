@@ -4,17 +4,53 @@ using System.Net.Http.Json;
 
 namespace CryptoDashboard.Infrastructure.Repository
 {
-    public class CoinGeckoRepository(HttpClient http): ICryptoRepository
+    public class CoinGeckoRepository: ICryptoRepository
     {
+        private readonly HttpClient _http;
+        private readonly string url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false";
 
-        private readonly HttpClient _http = http;
+        private static DateTime _lastFetchTime = DateTime.MinValue;
+        private static List<Crypto> _cachedCryptos = new();
+
+        public CoinGeckoRepository(HttpClient http)
+        {
+            _http = http;
+        }
 
         public async Task<IEnumerable<Crypto>> FetchLatestCryptos()
         {
-            var response = await _http.GetFromJsonAsync<List<CryptoDto>>(
-                "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkling=false");
+            // Cache for 60 seconds
+            if ((DateTime.Now - _lastFetchTime).TotalSeconds < 60 && _cachedCryptos.Any())
+            {
+                return _cachedCryptos;
+            }
 
-            return response!.Select(d => new Crypto(d.Id, d.Name, d.Current_price, d.Price_change_24h, d.Market_cap, d.Image)).ToList();
+            try
+            {
+                var response = await _http.GetFromJsonAsync<List<CryptoDto>>(url);
+
+                if (response == null)
+                    return Enumerable.Empty<Crypto>();
+
+                _cachedCryptos = response.Select(d =>
+                    new Crypto(d.Id, d.Name, d.Symbol, d.Current_price, d.Price_change_24h, d.Price_change_percentage_24h, d.Market_cap)
+                ).ToList();
+
+                _lastFetchTime = DateTime.Now;
+                return _cachedCryptos;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                // Log or notify: too many requests
+                Console.WriteLine("Rate limit exceeded. Returning cached data if available.");
+                return _cachedCryptos.Any() ? _cachedCryptos : Enumerable.Empty<Crypto>();
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                return Enumerable.Empty<Crypto>();
+            }
         }
 
         public async Task<Crypto> FetchCryptoById(string id)
@@ -29,10 +65,12 @@ namespace CryptoDashboard.Infrastructure.Repository
         {
             public string Id { get; set; } = string.Empty;
             public string Name { get; set; } = string.Empty;
+            public string Symbol { get; set; } = string.Empty;
             public decimal Current_price { get; set; }
             public decimal Price_change_24h { get; set; }
+            public decimal Price_change_percentage_24h { get; set; }
             public decimal Market_cap { get; set; }
-            public string Image { get; set; } = string.Empty;
+            // public string Image { get; set; } = string.Empty;
         }
     }
 }

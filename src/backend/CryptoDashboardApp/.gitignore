@@ -1,0 +1,15 @@
+# VS / Rider / IDE
+.vs/
+*.user
+
+# Build output
+bin/
+obj/
+
+# Logs
+*.log
+
+# Angular / Node
+node_modules/
+dist/
+build/

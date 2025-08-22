@@ -10,3 +10,5 @@
 *.log
 Dockerfile*
 .env
+*.pdb
+*.exe
