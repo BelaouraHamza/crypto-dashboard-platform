@@ -96,6 +96,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install required Ansible collections
+        run: |
+          ansible-galaxy collection install community.general
+          ansible-galaxy collection install kubernetes.core
+          ansible-galaxy collection install community.crypto
+
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
@@ -144,6 +150,6 @@ jobs:
         run: |
           kubectl apply -f infra/argocd/app.yaml
           if ! argocd app sync crypto-dashboard; then
-            echo "⚠️ Sync failed, rollback..."
+            echo "App Sync failed, rolling back..."
             argocd app rollback crypto-dashboard
             exit 1

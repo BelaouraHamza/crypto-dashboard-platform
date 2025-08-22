@@ -1,7 +1,13 @@
+---
 - name: Start Minikube cluster (docker driver)
   community.general.minikube:
     state: started
     driver: docker
+    cpus: 2
+    memory: 4096
+    disk_size: 20000
+  become: yes
+
 
 - name: Enable ingress addon
   command: minikube addons enable ingress
