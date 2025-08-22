@@ -102,6 +102,7 @@ jobs:
       # Installer les collections nécessaires
       - name: Install required Ansible collections
         run: |
+          mkdir -p infra/ansible/collections
           ansible-galaxy collection install community.crypto:>=2.0.0 --collections-path ./collections
           ansible-galaxy collection install community.kubernetes:>=2.0.0 --collections-path ./collections
 
@@ -110,8 +111,7 @@ jobs:
         run: |
           cd infra/ansible
           export ANSIBLE_ROLES_PATH=$(pwd)/roles
-          
-          export ANSIBLE_COLLECTIONS_PATHS=/usr/share/ansible/collections:/home/runner/.ansible/collections
+          export ANSIBLE_COLLECTIONS_PATHS=$(pwd)/collections:/usr/share/ansible/collections:/home/runner/.ansible/collections
           ansible-playbook playbooks/bootstrap.yml -i inventory
 
       - name: Set up Kubeconfig
