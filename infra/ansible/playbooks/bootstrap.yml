@@ -3,21 +3,6 @@
   connection: local
   gather_facts: no
   tasks:
-
-    # === Installer les collections nécessaires ===
-    - name: Install community.crypto collection
-      ansible.builtin.ansible_galaxy:
-        command: collection
-        name: community.crypto
-        state: present
-
-    - name: Install community.kubernetes collection
-      ansible.builtin.ansible_galaxy:
-        command: collection
-        name: community.kubernetes
-        state: present
-
-    # === Appel des rôles ===
     - name: Apply TLS role
       ansible.builtin.include_role:
         name: tls
