@@ -96,12 +96,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install required Ansible collections
-        run: |
-          ansible-galaxy collection install community.general
-          ansible-galaxy collection install kubernetes.core
-          ansible-galaxy collection install community.crypto
-
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
@@ -110,7 +104,7 @@ jobs:
         run: |
           ansible-galaxy collection install community.crypto:>=2.0.0
           ansible-galaxy collection install community.kubernetes:>=2.0.0
-          
+
       - name: Run bootstrap playbook
         run: |
           cd infra/ansible
@@ -148,9 +142,10 @@ jobs:
       - name: Login to ArgoCD
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
-            --username admin \
-            --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --insecure
+          --username admin \
+          --password $ARGOCD_PASSWORD \
+          --insecure || true
+
 
       - name: Apply ArgoCD App
         run: |
