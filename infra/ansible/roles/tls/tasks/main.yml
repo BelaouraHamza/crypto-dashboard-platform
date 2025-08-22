@@ -1,39 +1,48 @@
-- name: Ensure crypto.local in /etc/hosts
+---
+# roles/tls/tasks/main.yml
+- name: Ensure /etc/hosts contains crypto.local
   become: yes
-  ansible.builtin.lineinfile:
+  lineinfile:
     path: /etc/hosts
     line: "127.0.0.1 crypto.local"
     state: present
 
 - name: Generate private key
   community.crypto.openssl_privatekey:
-    path: "{{ playbook_dir }}/tmp/crypto.local.key"
+    path: /tmp/crypto.local.key
     size: 2048
+    type: RSA
+  register: privatekey_result
 
 - name: Generate CSR
   community.crypto.openssl_csr:
-    path: "{{ playbook_dir }}/tmp/crypto.local.csr"
-    privatekey_path: "{{ playbook_dir }}/tmp/crypto.local.key"
+    path: /tmp/crypto.local.csr
+    privatekey_path: /tmp/crypto.local.key
     common_name: crypto.local
+  register: csr_result
 
-- name: Self-sign cert
-  community.crypto.openssl_certificate:
-    path: "{{ playbook_dir }}/tmp/crypto.local.crt"
-    privatekey_path: "{{ playbook_dir }}/tmp/crypto.local.key"
-    csr_path: "{{ playbook_dir }}/tmp/crypto.local.csr"
+- name: Self-sign certificate
+  community.crypto.x509_certificate:
+    path: /tmp/crypto.local.crt
+    privatekey_path: /tmp/crypto.local.key
+    csr_path: /tmp/crypto.local.csr
     provider: selfsigned
     days: 365
+    subject:
+      common_name: crypto.local
+  register: cert_result
 
-- name: Create/update TLS secret in crypto namespace
-  community.kubernetes.k8s:
+- name: Create TLS secret in crypto namespace
+  kubernetes.core.k8s:
     state: present
-    namespace: crypto
     definition:
       apiVersion: v1
       kind: Secret
       metadata:
         name: crypto-tls
+        namespace: crypto
       type: kubernetes.io/tls
       data:
-        tls.crt: "{{ lookup('file', playbook_dir + '/tmp/crypto.local.crt') | b64encode }}"
-        tls.key: "{{ lookup('file', playbook_dir + '/tmp/crypto.local.key') | b64encode }}"
+        tls.crt: "{{ lookup('file', '/tmp/crypto.local.crt') | b64encode }}"
+        tls.key: "{{ lookup('file', '/tmp/crypto.local.key') | b64encode }}"
+  ignore_errors: yes
