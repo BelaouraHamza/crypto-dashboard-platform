@@ -2,9 +2,32 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  vars:
-    use_ci: "{{ lookup('env','GITHUB_ACTIONS') | default(false) }}"
-  roles:
-    - tls
-    - cluster
-    - deploy
+  tasks:
+
+    # === Installer les collections nécessaires ===
+    - name: Install required Ansible collections
+      ansible.builtin.block:
+        - name: Install community.crypto collection
+          ansible.builtin.ansible_galaxy:
+            command: collection
+            name: community.crypto
+            state: present
+
+        - name: Install community.kubernetes collection
+          ansible.builtin.ansible_galaxy:
+            command: collection
+            name: community.kubernetes
+            state: present
+
+    # === Appel des rôles ===
+    - name: Apply TLS, Cluster and Deploy roles
+      ansible.builtin.include_role:
+        name: tls
+
+    - name: Apply Cluster role
+      ansible.builtin.include_role:
+        name: cluster
+
+    - name: Apply Deploy role
+      ansible.builtin.include_role:
+        name: deploy
