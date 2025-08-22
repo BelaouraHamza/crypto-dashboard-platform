@@ -102,11 +102,13 @@ jobs:
       # Installer les collections nécessaires
       - name: Install required Ansible collections
         run: |
-          ansible-galaxy collection install community.crypto:>=2.0.0
-          ansible-galaxy collection install community.kubernetes:>=2.0.0
+          ansible-galaxy collection install community.crypto:>=2.0.0 --collections-path ./collections
+          ansible-galaxy collection install community.kubernetes:>=2.0.0 --collections-path ./collections
+
 
       - name: Run bootstrap playbook
         run: |
+          export ANSIBLE_ROLES_PATH=./infra/ansible/roles:./collections/community/crypto:./collections/community/kubernetes
           cd infra/ansible
           ansible-playbook playbooks/bootstrap.yml -i inventory
 
