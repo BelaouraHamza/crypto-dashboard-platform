@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/BelaouraHamza/crypto-dashboard-platform.git'
+    repoURL: 'https://github.com/Belaourarunner/crypto-dashboard-platform.git'
     targetRevision: main
     path: infra/k8s/base
   destination:

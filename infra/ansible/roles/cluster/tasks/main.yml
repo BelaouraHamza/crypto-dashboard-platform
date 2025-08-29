@@ -26,7 +26,7 @@
 
 - name: Ensure argocd namespace exists
   community.kubernetes.k8s:
-    kubeconfig: /home/hamza/.kube/config
+    kubeconfig: /home/runner/.kube/config
     state: present
     definition:
       apiVersion: v1

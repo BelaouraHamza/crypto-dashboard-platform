@@ -7,7 +7,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   environment:
-    K8S_AUTH_KUBECONFIG: "/home/hamza/.kube/config"
+    K8S_AUTH_KUBECONFIG: "/home/runner/.kube/config"
 
 - name: Deploy Helm chart
   community.kubernetes.helm:
@@ -18,4 +18,4 @@
     release_namespace: crypto
     create_namespace: true
     wait: true
-    kubeconfig: /home/hamza/.kube/config
+    kubeconfig: /home/runner/.kube/config

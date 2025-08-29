@@ -36,7 +36,7 @@
     kind: Namespace
     name: crypto
   environment:
-    KUBECONFIG: "/home/hamza/.kube/config"  # <- mets le chemin exact à ton kubeconfig
+    KUBECONFIG: "/home/runner/.kube/config"
 
 
 - name: Read TLS certificate content
@@ -54,7 +54,7 @@
 - name: Create TLS secret in crypto namespace
   become: yes
   kubernetes.core.k8s:
-    kubeconfig: /home/hamza/.kube/config
+    kubeconfig: /home/runner/.kube/config
     state: present
     namespace: crypto
     definition:
