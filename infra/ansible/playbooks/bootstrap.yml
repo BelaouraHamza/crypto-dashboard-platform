@@ -1,11 +1,16 @@
 - name: Bootstrap local Kubernetes cluster with TLS and ArgoCD
   hosts: localhost
+  become_method: sudo
+  become: yes
   connection: local
-  gather_facts: no
+  gather_facts: yes
+  collections:
+    - community.crypto
+
   tasks:
     - name: Apply TLS role
       ansible.builtin.include_role:
-        name: tls
+        name: roles/tls
 
     - name: Apply Cluster role
       ansible.builtin.include_role:

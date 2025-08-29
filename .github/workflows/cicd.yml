@@ -101,14 +101,12 @@ jobs:
 
       - name: Install required Ansible collections
         run: |
-          mkdir -p infra/ansible/collections
           ansible-galaxy collection install community.crypto:>=2.0.0 
           ansible-galaxy collection install community.kubernetes:>=2.0.0
 
       - name: Run bootstrap playbook
         run: |
           cd infra/ansible
-          export ANSIBLE_ROLES_PATH=$(pwd)/roles
           ansible-playbook playbooks/bootstrap.yml -i inventory
 
       - name: Set up Kubeconfig

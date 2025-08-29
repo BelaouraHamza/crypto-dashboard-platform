@@ -6,38 +6,40 @@
     state: present
 
 - name: Generate private key
-  community.crypto.x509_privatekey:
-    path: /tmp/crypto.local.key
+  community.crypto.openssl_privatekey:
+    path: /etc/ssl/private/selfsigned.key
     size: 2048
-    state: present
+    type: RSA
+    mode: '0600'
 
-- name: Generate CSR
-  community.crypto.x509_csr:
-    path: /tmp/crypto.local.csr
-    privatekey_path: /tmp/crypto.local.key
-    common_name: crypto.local
-    state: present
+- name: Generate CSR (Certificate Signing Request)
+  community.crypto.openssl_csr:
+    path: /etc/ssl/certs/selfsigned.csr
+    privatekey_path: /etc/ssl/private/selfsigned.key
+    common_name: "crypto.local"
+    country_name: "FR"
+    organization_name: "MyOrg"
 
 - name: Self-sign certificate
   community.crypto.x509_certificate:
-    path: /tmp/crypto.local.crt
-    privatekey_path: /tmp/crypto.local.key
-    csr_path: /tmp/crypto.local.csr
+    path: /etc/ssl/certs/selfsigned.crt
+    privatekey_path: /etc/ssl/private/selfsigned.key
+    csr_path: /etc/ssl/certs/selfsigned.csr
     provider: selfsigned
-    days: 365
+    selfsigned_notBefore: "+0s"
+    selfsigned_notAfter: "+365d"
     state: present
 
 - name: Ensure crypto namespace exists
   community.kubernetes.k8s:
     state: present
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: crypto
+    kind: Namespace
+    name: crypto
+  environment:
+    KUBECONFIG: "/home/hamza/.kube/config"  # <- mets le chemin exact à ton kubeconfig
 
 - name: Create TLS secret in crypto namespace
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     state: present
     namespace: crypto
     definition:
@@ -47,8 +49,10 @@
         name: crypto-tls
       type: kubernetes.io/tls
       data:
-        tls.crt: "{{ lookup('file','/tmp/crypto.local.crt') | b64encode }}"
-        tls.key: "{{ lookup('file','/tmp/crypto.local.key') | b64encode }}"
+        tls.crt: "{{ lookup('file','/etc/ssl/certs/selfsigned.crt') | b64encode }}"
+        tls.key: "{{ lookup('file','/etc/ssl/private/selfsigned.key') | b64encode }}"
+  environment:
+    KUBECONFIG: "/home/hamza/.kube/config"  # <- mets le chemin exact à ton kubeconfig  
 
 - name: Clean temporary files
   ansible.builtin.file:

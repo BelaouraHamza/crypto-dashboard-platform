@@ -32,11 +32,12 @@ export class CryptoTreemapComponent implements AfterViewInit, OnDestroy {
 
 @Input()
 set cryptoData(data: any[]) {
-this._cryptoData = (data || []).map(c => {
-  return {
-    symbol: c.symbol,                     
-    value: +c.marketCap || 0,              
-    current_price:  +c.currentPrice || 0,    
+  console.log('Crypto data received in treemap component:', data);
+  this._cryptoData = (data || []).map(c => {
+    return {
+      symbol: c.symbol,
+      value: +c.marketCap || 0,
+      current_price: +c.currentPrice || 0,
     price_change_24h: +c.priceChange24h || 0,              
     price_change_percentage_24h: +c.priceChangePercentage24h || 0 
   };

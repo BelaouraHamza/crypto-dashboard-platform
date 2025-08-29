@@ -30,15 +30,19 @@ export class CryptoService {
     private readonly http: HttpClient,
     @Inject(PLATFORM_ID) private readonly platformId: Object
   ) {
-    this.apiUrl = isPlatformBrowser(this.platformId)
-                ? (window as any).__env?.['API_URL'] ?? '/api'
-                : '/api';
 
+  if (typeof window !== 'undefined' && window['__env']?.['API_URL']) {
+    this.apiUrl = window['__env']['API_URL']; 
+  } else if (isPlatformBrowser(this.platformId) && window.location.hostname === 'localhost') {
+    this.apiUrl = 'http://localhost:5291/api/crypto'; 
+  } else {
+    this.apiUrl = '/api/crypto';
   }
-
+}
 
   getCryptos(): Observable<RawCryptoData[]> {
-    let resp =  this.http.get<RawCryptoData[]>(this.apiUrl).pipe(
+    console.log("url:", this.apiUrl);
+    let resp = this.http.get<RawCryptoData[]>(this.apiUrl).pipe(
       map((data: any[]) => data.map(c => ({
         id: c.id,
         name: c.name.toUpperCase(),

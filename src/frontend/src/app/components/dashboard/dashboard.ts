@@ -1,5 +1,5 @@
-import { Component, OnInit, Output } from '@angular/core';
-import { CryptoService, RawCryptoData } from '../../services/crypto.service';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { CryptoService } from '../../services/crypto.service';
 import { CryptoTreemapComponent } from '../crypto-treemap-component/crypto-treemap-component';
 import { CryptoData } from '../../services/crypto';
 
@@ -20,7 +20,8 @@ interface CryptoNode {
 export class DashboardComponent implements OnInit {
   cryptos: CryptoData[] = [];
 
-  constructor(private cryptoService: CryptoService) {}
+  constructor(private cryptoService: CryptoService, 
+    private cdref: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.cryptoService.getCryptos().subscribe(data => {
@@ -33,6 +34,7 @@ export class DashboardComponent implements OnInit {
         priceChangePercentage24h: c.priceChangePercentage24h,
         marketCap: c.marketCap
       }));
+      this.cdref.detectChanges();
     });
   }
 }
