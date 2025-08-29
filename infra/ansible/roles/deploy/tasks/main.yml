@@ -1,17 +1,21 @@
 - name: Create crypto namespace
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
+    name: crypto
+    api_version: v1
+    kind: Namespace
     state: present
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: crypto
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  environment:
+    K8S_AUTH_KUBECONFIG: "/home/hamza/.kube/config"
 
 - name: Deploy Helm chart
   community.kubernetes.helm:
     name: crypto-dashboard
-    chart_ref: ../../helm/crypto-chart
+    chart_ref: "{{ playbook_dir }}/../../helm/crypto-chart"
+    values_files:
+      - "{{ playbook_dir }}/../../helm/crypto-chart/values.yaml"
     release_namespace: crypto
     create_namespace: true
-    values_file: ../../helm/crypto-chart/values.yaml
-    state: present
+    wait: true
+    kubeconfig: /home/hamza/.kube/config

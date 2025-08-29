@@ -1,9 +1,11 @@
 - name: Bootstrap local Kubernetes cluster with TLS and ArgoCD
   hosts: localhost
+  vars:
+    use_ci: false
   become_method: sudo
   become: yes
   connection: local
-  gather_facts: yes
+  gather_facts: no
   collections:
     - community.crypto
 

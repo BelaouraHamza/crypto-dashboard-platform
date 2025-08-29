@@ -1,7 +1,15 @@
 replicaCount: 1
-image:
-  backend: ghcr.io/hamzablr/crypto-backend:latest
-  frontend: ghcr.io/hamzablr/crypto-frontend:latest
+backend:
+  image:
+    repository: crypto-backend
+    tag: latest
+    pullPolicy: Never
+
+frontend:
+  image:
+    repository: crypto-frontend
+    tag: latest
+    pullPolicy: Never
 postgres:
   image: postgres:15-alpine
   database: crypto_db

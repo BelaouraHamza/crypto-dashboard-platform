@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: frontend
   namespace: crypto
+  labels:
+    app: frontend
 spec:
   replicas: 1
   selector:
@@ -15,6 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/BelaouraHamza/frontendDashboard:latest
+          image: localhost:5001/crypto-frontend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

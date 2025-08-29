@@ -38,8 +38,23 @@
   environment:
     KUBECONFIG: "/home/hamza/.kube/config"  # <- mets le chemin exact à ton kubeconfig
 
+
+- name: Read TLS certificate content
+  become: yes
+  ansible.builtin.slurp:
+    src: /etc/ssl/certs/selfsigned.crt
+  register: tls_crt_content
+
+- name: Read TLS key content
+  become: yes
+  ansible.builtin.slurp:
+    src: /etc/ssl/private/selfsigned.key
+  register: tls_key_content
+
 - name: Create TLS secret in crypto namespace
+  become: yes
   kubernetes.core.k8s:
+    kubeconfig: /home/hamza/.kube/config
     state: present
     namespace: crypto
     definition:
@@ -49,10 +64,9 @@
         name: crypto-tls
       type: kubernetes.io/tls
       data:
-        tls.crt: "{{ lookup('file','/etc/ssl/certs/selfsigned.crt') | b64encode }}"
-        tls.key: "{{ lookup('file','/etc/ssl/private/selfsigned.key') | b64encode }}"
-  environment:
-    KUBECONFIG: "/home/hamza/.kube/config"  # <- mets le chemin exact à ton kubeconfig  
+        tls.crt: "{{ tls_crt_content.content }}"
+        tls.key: "{{ tls_key_content.content }}"
+
 
 - name: Clean temporary files
   ansible.builtin.file:

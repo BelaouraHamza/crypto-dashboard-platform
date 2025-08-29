@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: backend
   namespace: crypto
+  labels:
+    app: backend
 spec:
   replicas: 1
   selector:
@@ -15,12 +17,15 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/hamzablr/backendDashboard:latest
+          image: localhost:5001/crypto-backend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
           env:
             - name: ASPNETCORE_ENVIRONMENT
-              value: Development
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5000"
             - name: CONNECTION_STRING
               valueFrom:
                 secretKeyRef:

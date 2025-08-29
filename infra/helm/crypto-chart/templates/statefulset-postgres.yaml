@@ -17,4 +17,9 @@ spec:
         - name: postgres
           image: {{ .Values.postgres.image }}
           env:
-            - name: POSTGRES_DB
+           - name: POSTGRES_DB  
+             value: {{ .Values.postgres.database }}
+           - name: POSTGRES_USER
+             value: {{ .Values.postgres.user }}
+           - name: POSTGRES_PASSWORD
+             value: {{ .Values.postgres.password }}

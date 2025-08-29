@@ -1,7 +1,7 @@
 - name: "Create local Kubernetes cluster"
   block:
     - name: Use Kind on CI
-      when: use_ci
+      when: use_ci | default(false)
       block:
         - name: Install kind CLI
           ansible.builtin.command: >
@@ -21,10 +21,12 @@
       block:
         - name: Start minikube (docker driver)
           ansible.builtin.command: minikube start --driver=docker
+          when: "'Running' not in lookup('pipe', 'minikube status | grep host')"
           ignore_errors: yes
 
 - name: Ensure argocd namespace exists
   community.kubernetes.k8s:
+    kubeconfig: /home/hamza/.kube/config
     state: present
     definition:
       apiVersion: v1
